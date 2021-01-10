@@ -1,21 +1,11 @@
 from pynput import mouse
+from pynput.keyboard import Key, Controller
 from SelectorState import ForceVolumePositions, Point
+from ScreenGrabber import ScreenGrabber
 import ctypes
 import cv2 as cv
-import numpy as np
-from PIL import ImageGrab
-import pytesseract as ocr
+import time
 
-# grabs a screenshot of insterest with the boundingbox (lowX,lowY,highX,highY), debug also exexutes imshow
-def getCvScreenshot(bbox, debug=False):
-    print(bbox)
-    pil_image = ImageGrab.grab(bbox=None, include_layered_windows=False, all_screens=True)
-    open_cv_img = np.array(pil_image)[bbox[1]:bbox[3],bbox[0]:bbox[2]]
-    if debug:
-        tmp = cv.cvtColor(open_cv_img,cv.COLOR_BGR2RGB)
-        cv.imshow('foo',tmp)
-        cv.waitKey(0)
-    return open_cv_img
 
 def getForceVolumeClicks():
     msgs = forceVolPos.getPrintMessages()
@@ -35,8 +25,48 @@ def getForceVolumeClicks():
             listener.join()
     forceVolPos.assignPositions(clickPositions)
 
-def getTextInImage(image):
-    return ocr.image_to_string(image)
+def getAllPositions():
+    print("I will now scan and edit the ForceVolumes.\nCHECK THAT THE VISIBLE LIST IS 10 ELEMENTS LONG!\nType the number of expected enties:")
+    # ask how many elements to expect
+    numForceVolumes = int(input())
+    mouseCtrl = mouse.Controller()
+    keyCtrl = Controller()
+    numBatches = int(numForceVolumes / 10)
+    rest = numForceVolumes % 10
+    for batchNum in range(numBatches):
+        bbox = Point.getBbox(forceVolPos.locationCoordTopLeft,forceVolPos.locationCoordBottomRight,forceVolPos.zeroPosition.toTuple())
+        ret = ScreenGrabber.getLocationBatch(bbox)
+        # click on each location and extract screenshot of force direction ID
+        for batchElem in range(10):
+            # moving away curser (readable screenshot)
+            mouseCtrl.position = (0,0)
+
+            # selecting element
+            posX = int((forceVolPos.locationCoordBottomRight.getX() + forceVolPos.locationCoordTopLeft.getX())/2.0)
+            yDiff = forceVolPos.locationCoordBottomRight.getY() - forceVolPos.locationCoordTopLeft.getY()
+            posY = int(forceVolPos.locationCoordTopLeft.getY() + yDiff*batchElem / 10 + yDiff / 20)
+            locationImage = ScreenGrabber.getCvScreenshot(bbox)
+            #locationImage = cv.line(locationImage, (0,posY-forceVolPos.locationCoordTopLeft.getY()),(locationImage.shape[1],posY-forceVolPos.locationCoordTopLeft.getY()),(0,0,255),thickness=1)
+            mouseCtrl.position = (posX,posY)
+            mouseCtrl.press(mouse.Button.left)
+            mouseCtrl.release(mouse.Button.left)
+            time.sleep(0.2)
+
+            # setting constant force
+            forcePt = forceVolPos.constantForceMiddle #Point.difference(forceVolPos.constantForceMiddle, forceVolPos.zeroPosition)
+            mouseCtrl.position= forcePt.toTuple()
+            mouseCtrl.press(mouse.Button.left)
+            mouseCtrl.release(mouse.Button.left)
+            time.sleep(0.2)
+            keyCtrl.type('1337.000')
+            keyCtrl.press(Key.enter)
+            keyCtrl.release(Key.enter)
+            mouseCtrl.position = (posX,posY)
+
+            # screenshot Node reference number
+
+        mouseCtrl.scroll(0,-4)
+        time.sleep(0.2)
 
 forceVolPos = ForceVolumePositions()
 def main():
@@ -49,15 +79,13 @@ def main():
     print("This includes the attached PathNodes. Also the configured mass points should be positioned as well.\n\nDuring the runtime, please do not interfere, except wen you are told to.")
     
     # Getting relevant mouse positions
-    getForceVolumeClicks()
-
+    #getForceVolumeClicks()
+    forceVolPos.importFromFile()
     # grabbing images of clicked boundingboxes
-    
-    bbox = Point.getBbox(forceVolPos.forceDirectionCoordTopLeft,forceVolPos.forceDirectionCoordBottomRight,forceVolPos.zeroPosition.toTuple())
-    img = getCvScreenshot(bbox, True)
-    imageText = getTextInImage(img)
-
-
-
+    if False:
+        bbox = Point.getBbox(forceVolPos.locationCoordTopLeft,forceVolPos.locationCoordBottomRight,forceVolPos.zeroPosition.toTuple())
+        ret = ScreenGrabber.getLocationBatch(bbox)
+        print(ret)
+    getAllPositions()
 
 main()
