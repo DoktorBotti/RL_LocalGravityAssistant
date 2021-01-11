@@ -1,7 +1,8 @@
 from pynput import mouse
 from pynput.keyboard import Key, Controller
-from SelectorState import ForceVolumePositions, Point
+from SelectorState import ForceVolumePositions, ClickPoint
 from ScreenGrabber import ScreenGrabber
+import jsonpickle as jsonIo
 import ctypes
 import cv2 as cv
 import time
@@ -15,8 +16,8 @@ def getForceVolumeClicks():
         # mouse click callback
         def onClick(x,y,button,pressed):
             if(pressed):
-                print(Point(x,y))
-                clickPositions.append(Point(x,y))
+                print(ClickPoint(x,y))
+                clickPositions.append(ClickPoint(x,y))
             else:
                 # Stop listener
                 return False
@@ -34,7 +35,7 @@ def getAllPositions():
     numBatches = int(numForceVolumes / 10)
     rest = numForceVolumes % 10
     for batchNum in range(numBatches):
-        bbox = Point.getBbox(forceVolPos.locationCoordTopLeft,forceVolPos.locationCoordBottomRight,forceVolPos.zeroPosition.toTuple())
+        bbox = ClickPoint.getBbox(forceVolPos.locationCoordTopLeft,forceVolPos.locationCoordBottomRight,forceVolPos.zeroPosition.toTuple())
         ret = ScreenGrabber.getLocationBatch(bbox)
         # click on each location and extract screenshot of force direction ID
         for batchElem in range(10):
@@ -79,11 +80,12 @@ def main():
     print("This includes the attached PathNodes. Also the configured mass points should be positioned as well.\n\nDuring the runtime, please do not interfere, except wen you are told to.")
     
     # Getting relevant mouse positions
-    #getForceVolumeClicks()
+    getForceVolumeClicks()
+    print(jsonIo.encode(forceVolPos))
     forceVolPos.importFromFile()
     # grabbing images of clicked boundingboxes
     if False:
-        bbox = Point.getBbox(forceVolPos.locationCoordTopLeft,forceVolPos.locationCoordBottomRight,forceVolPos.zeroPosition.toTuple())
+        bbox = ClickPoint.getBbox(forceVolPos.locationCoordTopLeft,forceVolPos.locationCoordBottomRight,forceVolPos.zeroPosition.toTuple())
         ret = ScreenGrabber.getLocationBatch(bbox)
         print(ret)
     getAllPositions()

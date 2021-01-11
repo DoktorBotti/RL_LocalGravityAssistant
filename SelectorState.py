@@ -1,35 +1,18 @@
 import array as arr
 import re
-class Point(object):
-    def __init__(self,x,y):
-        self.X = x
-        self.Y = y
-    def __str__(self):
-        return f"Point({self.X}, {self.Y})"
-    def __repr__(self):
-        return f"Point({self.X}, {self.Y})"
-    def getX(self):
-        return self.X
-    def getY(self):
-        return self.Y
-    def difference(self, other):
-        return Point(self.X - other.getX(), self.Y - other.getY())
-    def toTuple(self):
-        return (self.X,self.Y)
-    @staticmethod
-    def getBbox(start, end, offset=(0,0)):
-        return (start.getX()-offset[0],start.getY()-offset[1],end.getX()-offset[0],end.getY()-offset[1])
+from ClickingStuff import ClickPoint, ROI
+
 
 class ForceVolumePositions:
     def __init__(self):
         # Setting ForceVolume coordinates
-        self.zeroPosition = Point(0,0)
-        self.locationCoordTopLeft = Point(0,0)
-        self.locationCoordBottomRight = Point(0,0)
-        self.constantForceCoord=Point(0,0)
-        self.forceDirectionCoordTopLeft = Point(0,0)
-        self.forceDirectionCoordBottomRight = Point(0,0)
-        self.eleventhEntryBottom = Point(0,0)
+        self.zeroPosition = ClickPoint(0,0)
+        self.locationCoordTopLeft = ClickPoint(0,0)
+        self.locationCoordBottomRight = ClickPoint(0,0)
+        self.constantForceCoord=ClickPoint(0,0)
+        self.forceDirectionCoordTopLeft = ClickPoint(0,0)
+        self.forceDirectionCoordBottomRight = ClickPoint(0,0)
+        self.eleventhEntryBottom = ClickPoint(0,0)
     
     def getPrintMessages(self):
         ret = ["Click in the top left corner of your leftmost monitor"]
@@ -63,7 +46,7 @@ class ForceVolumePositions:
             lines = '\n'.join(file.readlines())
             matches = re.finditer(regex, lines)
             for matchnum,match in enumerate(matches, start=1):
-                arr.append(Point(int(match.group(1)),int(match.group(2))))
+                arr.append(ClickPoint(int(match.group(1)),int(match.group(2))))
             self.assignPositions(arr)
 
 
@@ -72,8 +55,8 @@ class ForceVolumePositions:
 class PathNodePositions:
     def __init__(self):
         # Setting Path node coordinates
-        self.actorNameCoordTopLeft = Point(0,0)
-        self.actorNameCoordBottomRight = Point(0,0)
-        self.rpyCoordTopLeft = Point(0,0)
-        self.rpyBottomRight = Point(0,0)
+        self.actorNameCoordTopLeft = ClickPoint(0,0)
+        self.actorNameCoordBottomRight = ClickPoint(0,0)
+        self.rpyCoordTopLeft = ClickPoint(0,0)
+        self.rpyBottomRight = ClickPoint(0,0)
 
