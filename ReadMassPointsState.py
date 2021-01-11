@@ -1,4 +1,4 @@
-from ClickingStuff import ClickPoint, ROI
+from ScreenCoordinates import ClickPoint, ROI
 import numpy as np
 import json
 class MassPointClickRegions:
@@ -13,7 +13,7 @@ class MassPointClickRegions:
     def fromPointArray(cls, arr):
         ret = cls()
         ret.pos_topleftMonitor = arr[0]
-        ret.roi_idCollumn = ROI(arr[1],arr[2])
+        ret.roi_idCollumn = ROI.createFromCorners(arr[1],arr[2])
         #TODO fill out rest after finishing getInputClickMessages()
         return ret
 

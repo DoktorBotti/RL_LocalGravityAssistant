@@ -1,15 +1,18 @@
 from pynput import mouse
 from pynput.keyboard import Key, Controller
+import StateMachine 
 from SelectorState import ForceVolumePositions, ClickPoint
 from ScreenGrabber import ScreenGrabber
+from ScreenCoordinates import ROI, ClickPoint
 import jsonpickle as jsonIo
 import ctypes
 import cv2 as cv
 import time
 
 
-def getForceVolumeClicks():
-    msgs = forceVolPos.getPrintMessages()
+
+def performClickRequests(stateClass):
+    msgs = stateClass.getPrintMessages()
     clickPositions = []
     for el in msgs:
         print(el)
@@ -24,7 +27,7 @@ def getForceVolumeClicks():
         # record click
         with mouse.Listener(on_click=onClick) as listener:
             listener.join()
-    forceVolPos.assignPositions(clickPositions)
+    stateClass.assignPositions(clickPositions)
 
 def getAllPositions():
     print("I will now scan and edit the ForceVolumes.\nCHECK THAT THE VISIBLE LIST IS 10 ELEMENTS LONG!\nType the number of expected enties:")
@@ -35,7 +38,7 @@ def getAllPositions():
     numBatches = int(numForceVolumes / 10)
     rest = numForceVolumes % 10
     for batchNum in range(numBatches):
-        bbox = ClickPoint.getBbox(forceVolPos.locationCoordTopLeft,forceVolPos.locationCoordBottomRight,forceVolPos.zeroPosition.toTuple())
+        bbox = forceVolPos.roi_location.toScreenshotTuple()
         ret = ScreenGrabber.getLocationBatch(bbox)
         # click on each location and extract screenshot of force direction ID
         for batchElem in range(10):
@@ -47,6 +50,7 @@ def getAllPositions():
             yDiff = forceVolPos.locationCoordBottomRight.getY() - forceVolPos.locationCoordTopLeft.getY()
             posY = int(forceVolPos.locationCoordTopLeft.getY() + yDiff*batchElem / 10 + yDiff / 20)
             locationImage = ScreenGrabber.getCvScreenshot(bbox)
+            alternativePos = forceVolPos.roi_location.getPositionBySclale(0.5,float(batchElem)/10.0)
             #locationImage = cv.line(locationImage, (0,posY-forceVolPos.locationCoordTopLeft.getY()),(locationImage.shape[1],posY-forceVolPos.locationCoordTopLeft.getY()),(0,0,255),thickness=1)
             mouseCtrl.position = (posX,posY)
             mouseCtrl.press(mouse.Button.left)
@@ -74,13 +78,18 @@ def main():
     # avoiding inconsistences between recording and controlling mouse
     #PROCESS_PER_MONITOR_DPI_AWARE = 2
     #ctypes.windll.shcore.SetProcessDpiAwareness(PROCESS_PER_MONITOR_DPI_AWARE)
+
     
-    #welcome message
-    print("Welcome to the Gravity Assistant for Unreal Engine 3. \nThe script assumes that you have already placed the ForceVolumes in your map.")
-    print("This includes the attached PathNodes. Also the configured mass points should be positioned as well.\n\nDuring the runtime, please do not interfere, except wen you are told to.")
-    
+    stateMachine = StateMachine.StateMachine()
+    while(True):
+        nextState = stateMachine.state.exec()
+        if nextState != None:
+            stateMachine.change(nextState)
+        else:
+            stateInput = input()
+            nextState = stateMachine.change(eval(stateInput))
     # Getting relevant mouse positions
-    getForceVolumeClicks()
+    performClickRequests(forceVolPos)
     print(jsonIo.encode(forceVolPos))
     forceVolPos.importFromFile()
     # grabbing images of clicked boundingboxes
