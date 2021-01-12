@@ -8,7 +8,7 @@
             "name": "Python: Automator",
             "type": "python",
             "request": "launch",
-            "program": "main.py",
+            "program": "newMain.py",
             "console": "integratedTerminal"
         }
     ]
