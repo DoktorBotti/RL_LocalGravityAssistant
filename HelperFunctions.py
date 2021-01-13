@@ -13,7 +13,8 @@ def plotMassPoints(phyInstance):
     plottingWindow = plt.figure()
 
     ax = plottingWindow.add_subplot(111, projection='3d')
-    ax.scatter(x,y,z)
+    ax.scatter(x,y,z, label='Mass points')
+    ax.legend()
     # Labeling
     ax.set_xlabel('X axis')
     ax.set_ylabel('Y axis')
@@ -21,16 +22,30 @@ def plotMassPoints(phyInstance):
 
     plt.show()
 
-def plotVolumes(dictVol):
-    positions = dictVol.values()
-    pointArray = list(p.arr for p,_ in positions)
+def plotWithVolumes(phyInstance, dictVol):
+    if len(dictVol) == 0:
+        print("<Nothing to plot>")
+        return
+    # plotting setup
+    plottingWindow = plt.figure('ForceVolume')
+    ax = plottingWindow.add_subplot(111, projection='3d')
+    
+    # prep plotting volumes
+
+    pointArray = list(tup[1].arr for tup in dictVol)
     ptMatrix = np.stack(pointArray,axis=0)
     x,y,z = np.hsplit(ptMatrix, 3)
 
-    plottingWindow = plt.figure('ForceVolume')
-
-    ax = plottingWindow.add_subplot(111, projection='3d')
-    ax.scatter(x,y,z)
+    # prep mass points 
+    massPts = phyInstance.getMassPoints()
+    pointArray = list(mp.position.arr for mp in massPts)
+    if len(pointArray) != 0:
+        ptMatrix = np.stack(pointArray,axis=0)
+        mx,my,mz = np.hsplit(ptMatrix, 3)
+        ax.scatter(mx,my,mz, label='Mass Points')
+    
+    ax.scatter(x,y,z, label='ForceVolume')
+    ax.legend()
     # Labeling
     ax.set_xlabel('X axis')
     ax.set_ylabel('Y axis')

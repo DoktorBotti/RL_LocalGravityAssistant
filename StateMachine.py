@@ -9,14 +9,12 @@ import re
 
 class StateInterface(abc.ABC):
    @abc.abstractmethod
-   def exec(self):
+   def exec(self, progState):
       pass
 
 class StateClass(object):
    name = "state"
    allowed = []
-   physics = Physics()
-   forceVolumeDict = dict()
 
    def switch(self, state):
       """ Switch to new state """
@@ -37,94 +35,94 @@ class StateClass(object):
 class Init(StateClass):
    name = "init"
    allowed = ['importMassPointsEd', 'importMassPointsText']
-   def exec(self):
+   def exec(self, progState):
       #welcome message
       print("Welcome to the Gravity Assistant for Unreal Engine 3. \nThe script assumes that you have already placed the ForceVolumes in your map.")
       print("This includes the attached PathNodes. The configured mass points should be positioned as well.")
-      print("Do you want to import your mass points from Triggers in the editor or from a textfile? respond with E(ditor) / T(ext) ")
-      while True:
-         inp = input()
-         if inp == 'E' or inp == 'e':
-            return ImportMassPointsEd
-         if inp == 'T' or inp == 't':
-            return ImportMassPointsText
+      
+      return ImportMassPointsEd
 
 @StateInterface.register
 class ImportMassPointsEd(StateClass):
    name = "importMassPointsEd"
    allowed = ['copyVolAndPathnodes']
-   def exec(self):
+   def exec(self, progState):
       #welcome message
       print("Please use the copy feature for all Triggers that should be interpreted as mass points.")
+      print("You can already scelect PathNodes and ForceVolumes too. This temporal memory will only be read and seached for Trigger values.")
       print("The Tag corresponds to the mass of the simulated object in kg.")
-      print("Confirm with enter after copying.")
+      print("Confirm with enter")
       _ = input()
-      while True:
-         massVolumesText = pc.paste()
-         with open('dumpTriggerActors.txt', 'w') as f:
-            f.write(massVolumesText)
-         # perform analysis --> add mass points to physics
-         regex = r"Begin Actor Class=Trigger(?:.|\n)*?Location=\(X=(.*?),Y=(.*?),Z=(.*?)\)(?:.|\n)*?Tag=\"(.*)\""
-         matches = re.finditer(regex, massVolumesText, re.MULTILINE)
-         for matchNum, match in enumerate(matches, start=1):
-            pos = Position(float(match.group(1)),float(match.group(2)),float(match.group(3)))
-            mass = float(match.group(4))
-            self.physics.addMassPoint(MassPoint(pos,mass))
+      massVolumesText = pc.paste()
+      #with open('dumpTriggerActors.txt', 'w') as f:
+       #  f.write(massVolumesText)
+      # perform analysis --> add mass points to physics
+      regex = r"Begin Actor Class=Trigger(?:.|\n)*?Location=\(X=(.*?),Y=(.*?),Z=(.*?)\)(?:.|\n)*?Tag=\"(.*)\""
+      matches = re.finditer(regex, massVolumesText, re.MULTILINE)
+      for matchNum, match in enumerate(matches, start=1):
+         pos = Position(float(match.group(1)),float(match.group(2)),float(match.group(3)))
+         mass = float(match.group(4))
+         progState.physics.addMassPoint(MassPoint(pos,mass))
 
-         return CopyVolAndPathnodes
-            
-@StateInterface.register
-class ImportMassPointsText(StateClass):
-   name = "importMassPointsText"
-   allowed = ['copyVolAndPathnodes']
-   def exec(self):
-      #welcome message
-      print("not supported yet. going back.")
-      return Init
+      print(f"Loaded {len(progState.physics.getMassPoints())} mass points.")
+      # checking validity of mass points
+      # TODO stuff?
+      return CopyVolAndPathnodes
 
 @StateInterface.register
 class CopyVolAndPathnodes(StateClass):
    name = "copyVolAndPathnodes"
    allowed = ['performCalc']
-   def exec(self):
-      # checking validity of mass points
-      print("Processed input. Review mass points in plot? Y / N")
-      while False:
-         inp = input()
-         if inp == 'Y' or inp == 'y':
-            HelperFunctions.plotMassPoints(self.physics)
-            break
-         if inp == 'N' or inp == 'n':
-            break
-      print("Now scelect and copy all ForceVolumes and PathNodes that should be manipulated. Then press enter to continue")
+   def exec(self, progState):
+      print("Copy all ForceVolumes and PathNodes that should be manipulated. Then press enter to continue")
       _ = input()
-      inputText = pc.paste()
-      res = "lol"
-      # filling forceVolumeDict entries
-      with open('dumpVolAndPath.txt', 'w') as f:
-            f.write(inputText)
-      regex  = r"Begin Actor Class=ForceVolume_TA Name=(.+?) (?:.|\n)*?CustomForceDirection=PathNode\'(.*?)\'(?:.|\n)*?Location=\(X=(.*?),Y=(.*?),Z=(.*?)\)"
-      matches = re.finditer(regex, inputText, re.MULTILINE)
+      progState.copiedText = pc.paste()
+      requiredPathNodes = set([])
+
+      # dumping to File for debugging
+      #with open('dumpVolAndPath.txt', 'w') as f:
+      #      f.write(progState.copiedText)
+      # reading all ForceVolumes
+      regex_forceVol  = r"Begin Actor Class=ForceVolume_TA Name=(.+?) (?:.|\n)*?CustomForceDirection=PathNode\'(.*?)\'(?:.|\n)*?Location=\(X=(.*?),Y=(.*?),Z=(.*?)\)"
+      matches = re.finditer(regex_forceVol, progState.copiedText, re.MULTILINE)
       for matchNum, match in enumerate(matches, start=1):
          pos = Position(float(match.group(3)),float(match.group(4)),float(match.group(5)))
          pathNodeRef = match.group(2)
          name = match.group(1)
-         self.forceVolumeDict[name] = (pos, pathNodeRef)
-      HelperFunctions.plotVolumes(self.forceVolumeDict)
+         requiredPathNodes.add(pathNodeRef)
+         progState.forceVolumeList.append((name, pos, pathNodeRef))
+      
+      # checking if all needed PathNodes are available
+      regex_pathNode = r"Begin Actor Class=PathNode Name=(.+?) "
+      pathNode_matches = re.finditer(regex_pathNode, progState.copiedText, re.MULTILINE)
+      # feedback to user
+      print(f"Loaded {len(progState.forceVolumeList)} ForceVolumes.")
+      for match in pathNode_matches:
+         requiredPathNodes.discard(match.group(1))
+      if len(requiredPathNodes) != 0:
+         print("Your copy of the editor did not include all linked PathNodes! The missing names are:")
+         print(requiredPathNodes)
       return PerformCalc
 
 
 @StateInterface.register
 class PerformCalc(StateClass):
    name = "performCalc"
-   allowed = ['init']
-   def exec(self):
+   allowed = ['copyVolAndPathnodes']
+   def exec(self, progState):
       print("Calculating...")
-      
-      res = "lol"
+      # TODO for each key take Position and calculate forces. Store inside rpyDict[pathNodeName] = (r,p,y) and listForces = [(name, force)]
+      #name is for doublechecking.
       #pc.copy(res)
-      print("Done. You can now remove the scelected ForceVolumes and Path nodes and paste the newly created items.")
-      exit()
+      while True:
+         print("You can now remove the scelected ForceVolumes and Path nodes and paste the newly created items.\n V:     Plot a visualization? \n I:     Import additional batch of ForceVolumes\n <any>: End Program")
+         inp = input()
+         if inp == 'V' or inp == 'v':
+            HelperFunctions.plotWithVolumes(progState.physics, progState.forceVolumeList)
+         elif inp == 'I' or inp == 'i':
+            return CopyVolAndPathnodes
+         else:
+            exit()
 
 class StateMachine(object):
    """ represents the State Machine """
