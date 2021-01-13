@@ -38,11 +38,20 @@ def plotWithVolumes(phyInstance, dictVol):
 
     # prep mass points 
     massPts = phyInstance.getMassPoints()
-    pointArray = list(mp.position.arr for mp in massPts)
+    massPtArray = list(mp.position.arr for mp in massPts)
     if len(pointArray) != 0:
-        ptMatrix = np.stack(pointArray,axis=0)
+        ptMatrix = np.stack(massPtArray,axis=0)
         mx,my,mz = np.hsplit(ptMatrix, 3)
         ax.scatter(mx,my,mz, label='Mass Points')
+
+        # add vectors
+        endPositions = list()
+        for pt in pointArray:
+            endPositions.append(phyInstance.getForceVecOnPosition(Position.from_array(pt)))
+        ptMatrix_end = np.stack(endPositions, axis=0)
+        endX,endY,endZ = np.hsplit(ptMatrix_end,3)
+        ax.quiver(x,y,z,endX,endY,endZ)
+
     
     ax.scatter(x,y,z, label='ForceVolume')
     ax.legend()

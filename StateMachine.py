@@ -90,10 +90,11 @@ class CopyVolAndPathnodes(StateClass):
       for match in forceVolMatches:
          name = match.group(1)
          posMatch = re.search(r"Location=\(X=(.*?),Y=(.*?),Z=(.*?)\)",match.group(0))
+         pos = ()
          if posMatch == None:
-            print(f"Error! No pose found in {name}. Discarding this volume.")
-            continue
-         pos = Position(float(posMatch.group(1)),float(posMatch.group(2)),float(posMatch.group(3)))
+            pos = Position(0,0,0) # UE does not generate a field, when the object stays on (0,0,0)
+         else:
+            pos = Position(float(posMatch.group(1)),float(posMatch.group(2)),float(posMatch.group(3)))
          pathNodeMatch = re.search(r"CustomForceDirection=PathNode\'(.*?)\'",match.group(0))
          if pathNodeMatch == None:
             print(f"Error! No PathNode reference found in {name}. Discarding this volume.")
@@ -110,7 +111,7 @@ class CopyVolAndPathnodes(StateClass):
       for match in pathNode_matches:
          requiredPathNodes.discard(match.group(1))
       if len(requiredPathNodes) != 0:
-         print("Your copy of the editor did not include all linked PathNodes! The missing names are:")
+         print("Your copy from the editor did not include all linked PathNodes! The missing names are:")
          print(requiredPathNodes)
       return PerformCalc
 
@@ -135,7 +136,7 @@ class PerformCalc(StateClass):
       #for each element in the list: find replacement values by calculating force and orientation
       for (textEl, data) in zip(forceVolElementList, progState.forceVolumeList):
          constForceMode = 'ForceMode_Acceleration'
-         constForceVal, PathElToRPYDict[data[2]] = (1337 , (1,2,3)) # data.getDaForce
+         constForceVal, PathElToRPYDict[data[2]] = progState.physics.getForceRPYtuple(data[1])
          subs_regex = r"(Begin Actor Class=ForceVolume_TA (?:.|\n)*?)CustomForc"
          subst = f"\g<1>ForceDirection=EFD_Custom\n         ConstantForceMode={constForceMode}\n         ConstantForce={constForceVal}\n         EnterForce=0.000000\n         CustomForc"
          res = re.sub(subs_regex,subst, textEl,0, re.MULTILINE)
