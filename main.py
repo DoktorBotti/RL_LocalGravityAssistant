@@ -1,6 +1,5 @@
-import pyperclip as pc
 import re
-import StateMachine 
+import StateMachine
 from Physics import Physics
 
 class ProgramState(object):

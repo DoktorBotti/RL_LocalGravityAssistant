@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import axes3d
 import HelperFunctions
 import re
+import time
 
 class StateInterface(abc.ABC):
    @abc.abstractmethod
@@ -57,7 +58,7 @@ class ImportMassPointsEd(StateClass):
       #with open('dumpTriggerActors.txt', 'w') as f:
        #  f.write(massVolumesText)
       # perform analysis --> add mass points to physics
-      regex = r"Begin Actor Class=Trigger(?:.|\n)*?Location=\(X=(.*?),Y=(.*?),Z=(.*?)\)(?:.|\n)*?Tag=\"(.*)\""
+      regex = r"Begin Actor Class=Trigger(?:.|\n)*?Location=\(X=(.*?),Y=(.*?),Z=(.*?)\)(?:.|\n)*?Tag=\"(.*?)\""
       matches = re.finditer(regex, massVolumesText, re.MULTILINE)
       for matchNum, match in enumerate(matches, start=1):
          pos = Position(float(match.group(1)),float(match.group(2)),float(match.group(3)))
@@ -85,7 +86,7 @@ class CopyVolAndPathnodes(StateClass):
       # reading all ForceVolumes
       regex_forceVol  = r"Begin Actor Class=ForceVolume_TA Name=(.+?) (?:.|\n)*?CustomForceDirection=PathNode\'(.*?)\'(?:.|\n)*?Location=\(X=(.*?),Y=(.*?),Z=(.*?)\)"
       matches = re.finditer(regex_forceVol, progState.copiedText, re.MULTILINE)
-      for matchNum, match in enumerate(matches, start=1):
+      for match in matches:
          pos = Position(float(match.group(3)),float(match.group(4)),float(match.group(5)))
          pathNodeRef = match.group(2)
          name = match.group(1)
@@ -112,14 +113,61 @@ class PerformCalc(StateClass):
    def exec(self, progState):
       print("Calculating...")
       # TODO for each key take Position and calculate forces. Store inside rpyDict[pathNodeName] = (r,p,y) and listForces = [(name, force)]
-      #name is for doublechecking.
-      #pc.copy(res)
+      
+      # split text into pieces per ForceVolume
+      splForceVol_re = r"Begin Actor Class=ForceVolume_TA"
+      forceVolElementList = re.split(splForceVol_re, progState.copiedText)
+      header_beforeForceList = forceVolElementList.pop(0) # first segment contains no ForceVolume
+      forceVolElementList = list(splForceVol_re + el for el in forceVolElementList)
+
+      # preparing new variables for next step
+      PathElToRPYDict = dict()
+      postForceVolSubs = header_beforeForceList
+      #for each element in the list: find replacement values by calculating force and orientation
+      for (textEl, data) in zip(forceVolElementList, progState.forceVolumeList):
+         constForceMode = 'ForceMode_Acceleration'
+         constForceVal, PathElToRPYDict[data[2]] = (1337 , (1,2,3)) # data.getDaForce
+         subs_regex = r"(Begin Actor Class=ForceVolume_TA (?:.|\n)*?)CustomForc"
+         subst = f"\g<1>ForceDirection=EFD_Custom\n         ConstantForceMode={constForceMode}\n         ConstantForce={constForceVal}\n         EnterForce=0.000000\n         CustomForc"
+         res = re.sub(subs_regex,subst, textEl,0, re.MULTILINE)
+         postForceVolSubs += res
+
+      # rearranging original string - but with substituted values
+
+      # apply rpy changes to all path nodes (first remove any existing rpy entry)
+      removePrevRotation_regex = r"(Begin Actor Class=PathNode (?:.|\n)*)         Rotation.*\n"
+      subs_string = "\g<1>"
+      resText = re.sub(removePrevRotation_regex, subs_string, postForceVolSubs)
+
+      # split by PathElemens
+      splPathEl_re = r"Begin Actor Class=PathNode"
+      pathElemStrList = re.split(splPathEl_re,resText)
+      header_beforePathElList = pathElemStrList.pop(0)
+      pathElemStrList = (splPathEl_re + el for el in pathElemStrList)
+      pathElemResList =[""]
+
+      for pathElStr in pathElemStrList:
+         pName = re.search(r"Begin Actor Class=PathNode Name=(.*) ", pathElStr).group(1)
+         r, p, y = PathElToRPYDict[pName]
+         #insert rotation information below location
+         splittedByLocation = re.split(r"Location", pathElStr,1)
+         pathElemResList.append(splittedByLocation[0])
+         firstLineSplit = re.split(r"\n",splittedByLocation[1],1)
+         pathElemResList.append("Location" + firstLineSplit[0])
+         factor = 182.0444444444444 # WTF
+         pathElemResList.append(f"         Rotation=(Pitch={p*factor},Yaw={y*factor},Roll={r*factor}\n")
+         pathElemResList.append(firstLineSplit[1])
+      
+      resText = header_beforePathElList + ''.join(pathElemResList)
+      pc.copy(resText)
       while True:
          print("You can now remove the scelected ForceVolumes and Path nodes and paste the newly created items.\n V:     Plot a visualization? \n I:     Import additional batch of ForceVolumes\n <any>: End Program")
          inp = input()
          if inp == 'V' or inp == 'v':
             HelperFunctions.plotWithVolumes(progState.physics, progState.forceVolumeList)
          elif inp == 'I' or inp == 'i':
+            progState.forceVolumeList = list()
+            progState.copiedText = ""
             return CopyVolAndPathnodes
          else:
             exit()
