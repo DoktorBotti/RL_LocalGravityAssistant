@@ -86,12 +86,21 @@ class CopyVolAndPathnodes(StateClass):
       # reading all ForceVolumes
       regex_forceVol  = r"Begin Actor Class=ForceVolume_TA Name=(.+?) (?:.|\n)*?CustomForceDirection=PathNode\'(.*?)\'(?:.|\n)*?Location=\(X=(.*?),Y=(.*?),Z=(.*?)\)"
       matches = re.finditer(regex_forceVol, progState.copiedText, re.MULTILINE)
-      for match in matches:
-         pos = Position(float(match.group(3)),float(match.group(4)),float(match.group(5)))
-         pathNodeRef = match.group(2)
+      forceVolMatches = re.finditer(r"Begin Actor Class=ForceVolume_TA Name=(.+?) (?:.|\n)*?End Actor", progState.copiedText, re.MULTILINE)
+      for match in forceVolMatches:
          name = match.group(1)
-         requiredPathNodes.add(pathNodeRef)
-         progState.forceVolumeList.append((name, pos, pathNodeRef))
+         posMatch = re.search(r"Location=\(X=(.*?),Y=(.*?),Z=(.*?)\)",match.group(0))
+         if posMatch == None:
+            print(f"Error! No pose found in {name}. Discarding this volume.")
+            continue
+         pos = Position(float(posMatch.group(1)),float(posMatch.group(2)),float(posMatch.group(3)))
+         pathNodeMatch = re.search(r"CustomForceDirection=PathNode\'(.*?)\'",match.group(0))
+         if pathNodeMatch == None:
+            print(f"Error! No PathNode reference found in {name}. Discarding this volume.")
+            continue
+
+         requiredPathNodes.add(pathNodeMatch.group(1))
+         progState.forceVolumeList.append((name, pos, pathNodeMatch.group(1)))
       
       # checking if all needed PathNodes are available
       regex_pathNode = r"Begin Actor Class=PathNode Name=(.+?) "
@@ -148,6 +157,8 @@ class PerformCalc(StateClass):
 
       for pathElStr in pathElemStrList:
          pName = re.search(r"Begin Actor Class=PathNode Name=(.*) ", pathElStr).group(1)
+         if not pName in PathElToRPYDict.keys():
+            continue
          r, p, y = PathElToRPYDict[pName]
          #insert rotation information below location
          splittedByLocation = re.split(r"Location", pathElStr,1)
