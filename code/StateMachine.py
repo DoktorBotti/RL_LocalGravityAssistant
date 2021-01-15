@@ -69,7 +69,18 @@ class ImportMassPointsEd(StateClass):
          except ValueError:
             print(f"Mass point at {pos} had no Tag assigned. -Skipping")
             continue
-         progState.physics.addMassPoint(MassPoint(pos,mass))
+
+         # check if min and max height are configured
+         collHeightTxt = re.search( r"Begin Actor Class=Trigger(?:.|\n)*?CollisionHeight=(.+)\n", match.group(0),flags=re.MULTILINE)
+         collHeight = 0.0
+         if collHeightTxt != None and collHeightTxt.group(1) != "40.000000":
+            collHeight = float(collHeightTxt.group(1))
+         collRadTxt = re.search( r"Begin Actor Class=Trigger(?:.|\n)*?CollisionRadius=(.+)\n", match.group(0),flags=re.MULTILINE)
+         collRad = float('inf')
+         if collRadTxt != None and collRadTxt.group(1) != "40.000000":
+            collRad = float(collRadTxt.group(1))
+         
+         progState.physics.addMassPoint(MassPoint(pos,mass, collHeight, collRad))
 
       print(f"Loaded {len(progState.physics.getMassPoints())} mass points.")
       # checking validity of mass points

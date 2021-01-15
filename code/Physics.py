@@ -26,9 +26,11 @@ class Position(object):
     def normalized(self):
         return np.multiply(self.arr,1/Position.norm(self))
 class MassPoint(object):
-    def __init__(self, pos, mass):
+    def __init__(self, pos, mass, minDst, maxDst):
         self.position = pos
         self.mass = mass
+        self.minDst = minDst
+        self.maxDst = maxDst
     def __str__(self):
         return f"MassPoint({self.position}, {self.mass} kg)"
     def __repr__(self):
@@ -53,12 +55,17 @@ class Physics:
             return F * direction
         totalForce = np.array([0,0,0])
         for mp in self.massPoints:
+            distance = pos.subtract(mp.position).norm()
+            if distance < mp.minDst or distance > mp.maxDst:
+                continue
             vec = getForceVec(mp.position, mp.mass,pos, 1000.0)
             totalForce = np.add(totalForce, vec)
         return totalForce
     def getForceRPYtuple(self, position):
         forceVec = self.getForceVecOnPosition(position)
         norm = np.sqrt(np.dot(forceVec,forceVec))
+        if norm == 0.0:
+            return (norm, (0.0,0.0,0.0))
         normalized = forceVec * 1 / norm
         yaw = np.arctan2(normalized[0],normalized[1]) * 180 / np.pi
         pitch = np.arcsin(normalized[2])* 180 / np.pi
