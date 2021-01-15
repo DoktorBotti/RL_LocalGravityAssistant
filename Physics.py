@@ -49,7 +49,7 @@ class Physics:
         def getForceVec(p1,m1,p2,m2):
             r = p1.subtract(p2).norm()
             F = 6.6743e-11 * m1 * m2 / r / r
-            direction = p2.subtract(p1).normalized()
+            direction = p1.subtract(p2).normalized()
             return F * direction
         totalForce = np.array([0,0,0])
         for mp in self.massPoints:
@@ -60,8 +60,8 @@ class Physics:
         forceVec = self.getForceVecOnPosition(position)
         norm = np.sqrt(np.dot(forceVec,forceVec))
         normalized = forceVec * 1 / norm
-        yaw = np.arctan2(normalized[0],normalized[1])
-        pitch = np.arcsin(normalized[2])
+        yaw = np.arctan2(normalized[0],normalized[1]) * 180 / np.pi
+        pitch = np.arcsin(normalized[2])* 180 / np.pi
         return (norm, (0.0,pitch,yaw))
 
     def __str__(self):
