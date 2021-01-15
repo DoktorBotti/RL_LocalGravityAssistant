@@ -62,7 +62,7 @@ class ImportMassPointsEd(StateClass):
       regex = r"Begin Actor Class=Trigger(?:.|\n)*?Location=\(X=(.*?),Y=(.*?),Z=(.*?)\)(?:.|\n)*?Tag=\"(.*?)\""
       matches = re.finditer(regex, massVolumesText, re.MULTILINE)
       for matchNum, match in enumerate(matches, start=1):
-         pos = Position(float(match.group(1)),float(match.group(2)),float(match.group(3)))
+         pos = Position(float(match.group(2)),float(match.group(1)),float(match.group(3)))
          mass = 0
          try:
             mass = float(match.group(4))
@@ -100,7 +100,7 @@ class CopyVolAndPathnodes(StateClass):
          if posMatch == None:
             pos = Position(0,0,0) # UE does not generate a field, when the object stays on (0,0,0)
          else:
-            pos = Position(float(posMatch.group(1)),float(posMatch.group(2)),float(posMatch.group(3)))
+            pos = Position(float(posMatch.group(2)),float(posMatch.group(1)),float(posMatch.group(3)))
          pathNodeMatch = re.search(r"CustomForceDirection=PathNode\'(.*?)\'",match.group(0))
          if pathNodeMatch == None:
             print(f"Error! No PathNode reference found in {name}. Discarding this volume.")
@@ -161,9 +161,7 @@ class PerformCalc(StateClass):
       # rearranging original string - but with substituted values
 
       # apply rpy changes to all path nodes (first remove any existing rpy entry)
-      removePrevRotation_regex = r"(Begin Actor Class=PathNode (?:.|\n)*)         Rotation.*\n"
-      subs_string = "\g<1>"
-      resText = re.sub(removePrevRotation_regex, subs_string, postForceVolSubs, re.MULTILINE)
+      resText = HelperFunctions.deleteRotationInPathElements(postForceVolSubs)
 
       # split by PathElemens
       splPathEl_re = r"Begin Actor Class=PathNode"
@@ -184,7 +182,7 @@ class PerformCalc(StateClass):
          firstLineSplit = re.split(r"\n",splittedByLocation[1],1)
          pathElemResList.append("Location" + firstLineSplit[0])
          factor = 182.05 # WTF
-         pathElemResList.append(f"         Rotation=(Pitch={p*factor},Yaw={y*factor},Roll={r*factor}\n")
+         pathElemResList.append(f"         Rotation=(Pitch={int(p*factor)},Yaw={int(y*factor)},Roll={int(r*factor)})\n")
          pathElemResList.append(firstLineSplit[1])
          test +=pathElStr
       

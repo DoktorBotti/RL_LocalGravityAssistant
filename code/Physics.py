@@ -63,6 +63,11 @@ class Physics:
         yaw = np.arctan2(normalized[0],normalized[1]) * 180 / np.pi
         pitch = np.arcsin(normalized[2])* 180 / np.pi
         return (norm, (0.0,pitch,yaw))
+    def getNormAndRirectionVecFromPosition(self, pos):
+        forceVec = self.getForceVecOnPosition(pos)
+        norm = np.sqrt(np.dot(forceVec,forceVec))
+        normalized = forceVec * 1 / norm
+        return (norm, normalized)
 
     def __str__(self):
         return f"Physics instance. MassPoints: {self.massPoints}"
