@@ -41,4 +41,4 @@ A: No. It doesn't change anything else. Copy as many things as you want.
 A: Tricky one. The problem of course is, that depending on your mass point configuration, you will need a volume of little volumes. And this scales in n^3 along the edgelength.  
 The best option is to be smart about your ForceCube alignment and thus use larger ForceCubes. You could also use The Brush tool to generate the shape you need.
 - Q: Where do these questions even come from?  
-A: Off the top of my mind. But AMA on Discord (DoktorBotti#3406) or [Telegram](https://t.me/RL_GravityMod) with @RL_GravityMod  :`)
+A: Off the top of my mind. But AMA on Discord (DoktorBotti#3406) or [Telegram](https://t.me/RL_GravityMod) at @RL_GravityMod  :)
