@@ -73,11 +73,11 @@ class ImportMassPointsEd(StateClass):
          # check if min and max height are configured
          collHeightTxt = re.search( r"Begin Actor Class=Trigger(?:.|\n)*?CollisionHeight=(.+)\n", match.group(0),flags=re.MULTILINE)
          collHeight = 0.0
-         if collHeightTxt != None and collHeightTxt.group(1) != "40.000000":
+         if collHeightTxt != None and collHeightTxt.group(1) != "40.000000\r":
             collHeight = float(collHeightTxt.group(1))
          collRadTxt = re.search( r"Begin Actor Class=Trigger(?:.|\n)*?CollisionRadius=(.+)\n", match.group(0),flags=re.MULTILINE)
          collRad = float('inf')
-         if collRadTxt != None and collRadTxt.group(1) != "40.000000":
+         if collRadTxt != None and collRadTxt.group(1) != "40.000000\r":
             collRad = float(collRadTxt.group(1))
          
          progState.physics.addMassPoint(MassPoint(pos,mass, collHeight, collRad))
