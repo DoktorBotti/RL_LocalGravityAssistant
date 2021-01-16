@@ -92,8 +92,11 @@ class CopyVolAndPathnodes(StateClass):
    name = "copyVolAndPathnodes"
    allowed = ['performCalc']
    def exec(self, progState):
-      print("Copy all ForceVolumes and PathNodes that should be manipulated. Then press enter to continue")
-      _ = input()
+      print("Copy all ForceVolumes and PathNodes that should be manipulated, then press enter. \nTo change the applied force mode press \'C\' then enter")
+      userInputStr = input()
+      if userInputStr == 'C' or userInputStr == 'c':
+         HelperFunctions.changeForceMode(progState)
+         return CopyVolAndPathnodes
       progState.copiedText = pc.paste()
       requiredPathNodes = set([])
    
@@ -158,10 +161,9 @@ class PerformCalc(StateClass):
       test = header_beforeForceList
       #for each element in the list: find replacement values by calculating force and orientation
       for (textEl, data) in zip(forceVolElementList, progState.forceVolumeList):
-         constForceMode = 'ForceMode_Force' 'ForceMode_Acceleration'
          constForceVal, PathElToRPYDict[data[2]] = progState.physics.getForceRPYtuple(data[1])
          subs_regex = r"(Begin Actor Class=ForceVolume_TA (?:.|\n)*?)CustomForc"
-         subst = f"\g<1>ForceDirection=EFD_Custom\n         ConstantForceMode={constForceMode}\n         ConstantForce={constForceVal}\n         EnterForce=0.000000\n         CustomForc"
+         subst = f"\g<1>ForceDirection=EFD_Custom\n         ConstantForceMode={progState.forceMode}\n         ConstantForce={constForceVal}\n         EnterForce=0.000000\n         CustomForc"
          res = re.sub(subs_regex,subst, textEl,0, re.MULTILINE) 
          postForceVolSubs += res
          test += textEl

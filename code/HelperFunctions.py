@@ -41,11 +41,12 @@ def plotWithVolumes(phyInstance, dictVol):
     # prep mass points 
     massPts = phyInstance.getMassPoints()
     massPtArray = list(mp.position.arr for mp in massPts)
-    if len(pointArray) != 0:
+    if len(massPts) > 0: 
         ptMatrix = np.stack(massPtArray,axis=0)
         mx,my,mz = np.hsplit(ptMatrix, 3)
         ax.scatter(mx,my,mz, label='Mass Points')
 
+    if len(pointArray) != 0:
         # add vectors
         endPositions = list()
         for pt in pointArray:
@@ -81,3 +82,37 @@ def deleteRotationInPathElements(inputStr):
             resList.append(pathNodesWithoutRotation)
     res = ''.join(resList)
     return res
+
+def changeForceMode(programState):
+    userChoice = ""
+    while True:
+        listedOptions = """ - 'ForceMode_Force'             <F>   : Applies the specified constant force on all contained objects (default).
+- 'ForceMode_Acceleration'      <A>   : Accelerates all objects inside with a constant rate to the target vector. (good alternative)
+- 'ForceMode_Impulse'           <I>   : Applies an impuls continuously (? makes no sense...).
+- 'ForceMode_Velocity'          <V>   : Propells all entered dynamic objects with a constant speed.
+- 'ForceMode_SmoothImpulse'     <sI>  : Like impulse mode, but applied along a longer time interval (?)
+- 'ForceMode_SmoothVelocity'    <sV>  : Like velocity mode, but no direct acceleration to target velocity.
+Type the desired mode then enter.
+    """
+        print("\nThis setting will remain unchanged for the duration of this program or until changed again.\nUDK allows the following force application in the constant mode: \n" + listedOptions)
+        userInput = input().lower()
+        if userInput == 'f':
+            userChoice = "ForceMode_Force"
+            break
+        if userInput == 'a':
+            userChoice = "ForceMode_Acceleration"
+            break
+        if userInput == 'i':
+            userChoice = "ForceMode_Impulse"
+            break
+        if userInput == 'v':
+            userChoice = "ForceMode_Velocity"
+            break
+        if userInput == 'si':
+            userChoice = "ForceMode_SmoothImpulse"
+            break
+        if userInput == 'sv':
+            userChoice = "ForceMode_SmoothVelocity"
+            break
+    print(f"Scelected option \'{userChoice}\'\n")
+    programState.forceMode = userChoice

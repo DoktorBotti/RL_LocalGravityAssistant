@@ -8,6 +8,7 @@ class ProgramState(object):
         self.physics = Physics()
         self.forceVolumeList = list()
         self.copiedText = ""
+        self.forceMode = "ForceMode_Force"
 
 def main():
     if len(sys.argv) > 1 and (sys.argv[1] == "--help" or sys.argv[1] == '-h'):
