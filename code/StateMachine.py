@@ -131,8 +131,16 @@ class CopyVolAndPathnodes(StateClass):
       for match in pathNode_matches:
          requiredPathNodes.discard(match.group(1))
       if len(requiredPathNodes) != 0:
+         missingLink = list(requiredPathNodes)
+         assPathNodes = []
+         for el in missingLink:
+            for forceVolEl in progState.forceVolumeList:
+               if forceVolEl[2] == el:
+                  assPathNodes.append(forceVolEl[0] + " --> ")
+                  break
+         printLst = [x+y for (x,y) in zip(assPathNodes, missingLink)]
          print("Your copy from the editor did not include all linked PathNodes! The missing names are:")
-         print(requiredPathNodes)
+         print('\n'.join(printLst))
       return PerformCalc
 
 

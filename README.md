@@ -3,6 +3,7 @@ Rocket League modding tool, which assists in creating realistic gravity situatio
 ### Youtube tutorial
 [![Youtube Tutorial](https://img.youtube.com/vi/U35d40LHH14/0.jpg)](https://www.youtube.com/watch?v=U35d40LHH14 "Rocketleague!")
 ## How to install
+1. Install [Pyhton 3](https://www.python.org/downloads/) if you havent already. Be sure to add Pyhton to the path and check the install box for tcl/tk and pip.
 1. Download this repository (either use git clone or download a zip file and extract it)
 2. Run InstallDependencies.bat once. This will download some python packages.
 3. Execute the mod with executeTool.bat

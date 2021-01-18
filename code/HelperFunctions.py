@@ -13,13 +13,14 @@ def plotMassPoints(phyInstance):
 
     plottingWindow = plt.figure()
 
+    # plotting normal 3D view
     ax = plottingWindow.add_subplot(111, projection='3d')
     ax.scatter(x,y,z, label='Mass points')
     ax.axis('equal')
     ax.legend()
     # Labeling
-    ax.set_xlabel('X axis')
-    ax.set_ylabel('Y axis')
+    ax.set_xlabel('Y axis')
+    ax.set_ylabel('X axis')
     ax.set_zlabel('Z axis')
 
     plt.show()
@@ -29,8 +30,8 @@ def plotWithVolumes(phyInstance, dictVol):
         print("<Nothing to plot>")
         return
     # plotting setup
-    plottingWindow = plt.figure('ForceVolume')
-    ax = plottingWindow.add_subplot(111, projection='3d')
+    plottingWindow = plt.figure('ForceVolume',figsize=plt.figaspect(0.5))
+    ax = plottingWindow.add_subplot(1,2,1, projection='3d')
     
     # prep plotting volumes
 
@@ -49,21 +50,29 @@ def plotWithVolumes(phyInstance, dictVol):
     if len(pointArray) != 0:
         # add vectors
         endPositions = list()
+        normList = []
         for pt in pointArray:
             norm, direction = phyInstance.getNormAndRirectionVecFromPosition(Position.from_array(pt))
             endPositions.append(norm * direction)
+            normList.append(norm)
         ptMatrix_end = np.stack(endPositions, axis=0)
         endX,endY,endZ = np.hsplit(ptMatrix_end,3)
         ax.quiver(x,y,z,endX,endY,endZ,length=100, normalize=True)
+        # plotting histogram over applied forces
+        ax2 = plottingWindow.add_subplot(1,2,2)
+        ax2.hist(normList)
+        ax2.set_xlabel("| applied force |")
+        ax2.set_ylabel("Elements in bin")
+
+    ax.scatter(x,y,z, label='ForceVolume')
 
     
-    ax.scatter(x,y,z, label='ForceVolume')
     ax.legend()
     # Labeling
     ax.set_xlabel('X axis')
     ax.set_ylabel('Y axis')
     ax.set_zlabel('Z axis')
-
+    plottingWindow.tight_layout(w_pad=6)
     plt.show()
 
 def deleteRotationInPathElements(inputStr):
