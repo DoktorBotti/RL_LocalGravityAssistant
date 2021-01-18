@@ -1,7 +1,7 @@
 # RL_LocalGravityAssistant
 Rocket League modding tool, which assists in creating realistic gravity situations in custom maps
-### Simple map showcase
-[![Rocket League Map example](https://img.youtube.com/vi/9CFhBj_GrVM/0.jpg)](https://www.youtube.com/watch?v=9CFhBj_GrVM "Rocketleague!")
+### Youtube tutorial
+[![Youtube Tutorial](https://img.youtube.com/vi/U35d40LHH14/0.jpg)](https://www.youtube.com/watch?v=U35d40LHH14 "Rocketleague!")
 ## How to install
 1. Download this repository (either use git clone or download a zip file and extract it)
 2. Run InstallDependencies.bat once. This will download some python packages.
