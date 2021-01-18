@@ -1,7 +1,11 @@
 # RL_LocalGravityAssistant
 Rocket League modding tool, which assists in creating realistic gravity situations in custom maps
-### Youtube tutorial
-[![Youtube Tutorial](https://img.youtube.com/vi/U35d40LHH14/0.jpg)](https://www.youtube.com/watch?v=U35d40LHH14 "Rocketleague!")
+### Showcase
+![Alt Text](https://cdn.discordapp.com/attachments/711884447225610251/800524149826256896/rlGiv.gif)
+Youtube Tutorial             |  Integrated plotting tool
+:-------------------------:|:-------------------------:
+[![Youtube tutorial](https://img.youtube.com/vi/U35d40LHH14/0.jpg)](https://www.youtube.com/watch?v=U35d40LHH14 "Rocketleague!")  |  ![](demo_files/PlotDemo.png)
+
 ## How to install
 1. Install [Pyhton 3](https://www.python.org/downloads/) if you havent already. Be sure to add Pyhton to the path and check the install box for tcl/tk and pip.
 1. Download this repository (either use git clone or download a zip file and extract it)
